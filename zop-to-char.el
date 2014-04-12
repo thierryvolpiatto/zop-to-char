@@ -4,7 +4,7 @@
 ;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
 ;; X-URL: https://github.com/thierryvolpiatto/zop-to-char
 
-;; Compatibility: GNU Emacs 24.1+
+;; Compatibility: GNU Emacs 23.1+
 
 ;; This file is not part of GNU Emacs. 
 
