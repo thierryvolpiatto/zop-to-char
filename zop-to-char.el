@@ -1,12 +1,10 @@
 ;;; zop-to-char.el --- A replacement of zap-to-char.
 
-;	$Id: zop-to-char.el,v 1.7 2010/02/07 17:59:40 thierry Exp thierry $	
+;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
+;; X-URL: https://github.com/thierryvolpiatto/zop-to-char
 
-;; Author: Thierry Volpiatto
-
-;; Copyright (C) 2010 Thierry Volpiatto, all rights reserved.
-
-;; Compatibility: GNU Emacs 23.1.92.1
+;; Compatibility: GNU Emacs 24.1+
 
 ;; This file is not part of GNU Emacs. 
 
