@@ -3,6 +3,7 @@
 ;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
 ;; X-URL: https://github.com/thierryvolpiatto/zop-to-char
+;; Package-Requires: ((cl-lib "0.5"))
 
 ;; Compatibility: GNU Emacs 23.1+
 
@@ -31,6 +32,8 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+
 ;;;###autoload
 (defun zop-to-char (arg)
   "An enhanced version of `zap-to-char'."
@@ -47,7 +50,7 @@
          (while (let ((input (read-key (concat prompt char doc)))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
-                  (case input
+                  (cl-case input
                     ((?\r ?\C-k)   ; Kill region.
                      (kill-region beg end) nil)
                     (?\C-c         ; Copy region.
