@@ -34,6 +34,9 @@
 
 (require 'cl-lib)
 
+;; Internal
+(defvar zop-to-char--delete-up-to-char nil)
+
 ;;;###autoload
 (defun zop-to-char (arg)
   "An enhanced version of `zap-to-char'."
@@ -52,9 +55,14 @@
                       (end   (overlay-end ov)))
                   (cl-case input
                     ((?\r ?\C-k)   ; Kill region.
-                     (kill-region beg end) nil)
+                     (kill-region
+                      beg (if zop-to-char--delete-up-to-char
+                              (1- end) end)) nil)
                     (?\C-c         ; Copy region.
-                     (copy-region-as-kill beg end) (goto-char pos) nil)
+                     (copy-region-as-kill
+                      beg (if zop-to-char--delete-up-to-char
+                              (1- end) end))
+                     (goto-char pos) nil)
                     ((right ?\C-f) ; Next occurence.
                      (setq arg 1) t)
                     ((left ?\C-b)  ; Prec occurence.
@@ -77,6 +85,14 @@
                (move-overlay ov pos (1+ (point)))))
       (message nil)
       (delete-overlay ov))))
+
+;;;###autoload
+(defun zop-up-to-char (arg)
+  "Same as `zop-to-char' but stop just before target.
+Same as `zap-up-to-char'."
+  (interactive "p")
+  (let ((zop-to-char--delete-up-to-char t))
+    (zop-to-char arg)))
 
 (provide 'zop-to-char)
 
