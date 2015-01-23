@@ -37,6 +37,16 @@
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
 
+(defun zop-to-char-info-in-mode-line (prompt char doc)
+  "Display string STR in mode-line."
+  (with-current-buffer
+      (window-buffer (with-selected-window (minibuffer-window)
+                       (minibuffer-selected-window)))
+    (let ((mode-line-format (concat " " (concat prompt char doc))))
+      (force-mode-line-update)
+      (sit-for 12))
+    (force-mode-line-update)))
+
 ;;;###autoload
 (defun zop-to-char (arg)
   "An enhanced version of `zap-to-char'."
@@ -44,13 +54,21 @@
   (let* ((pos    (point))
          (ov     (make-overlay pos (1+ pos)))
          (char   "")
+         timer
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
          (doc    (propertize
                   "   [RET/C-k:kill, C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
                   'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
+    (and (eobp) (setq arg -1))
+    (when (minibufferp (current-buffer))
+      (setq timer (run-with-idle-timer
+                   0.1 t
+                   'zop-to-char-info-in-mode-line
+                   prompt char doc)))
     (unwind-protect
-         (while (let ((input (read-key (concat prompt char doc)))
+         (while (let ((input (read-key (unless (minibufferp (current-buffer))
+                                         (concat prompt char doc))))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
                   (cl-case input
@@ -84,6 +102,9 @@
                (move-overlay ov (1+ pos) (point))
                (move-overlay ov pos (1+ (point)))))
       (message nil)
+      (when timer
+        (cancel-timer timer) (setq timer nil))
+      (force-mode-line-update)
       (delete-overlay ov))))
 
 ;;;###autoload
