@@ -1,4 +1,4 @@
-;;; zop-to-char.el --- A replacement of zap-to-char.
+;;; zop-to-char.el --- A replacement of zap-to-char. -*- lexical-binding: t -*-
 
 ;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
@@ -36,13 +36,13 @@
 
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
-
-(defun zop-to-char-info-in-mode-line (prompt char doc)
+(defvar zop-to-char--last-input nil)
+(defun zop-to-char-info-in-mode-line (prompt doc)
   "Display string STR in mode-line."
   (with-current-buffer
       (window-buffer (with-selected-window (minibuffer-window)
                        (minibuffer-selected-window)))
-    (let ((mode-line-format (concat " " (concat prompt char doc))))
+    (let ((mode-line-format (concat " " (concat prompt zop-to-char--last-input doc))))
       (force-mode-line-update)
       (sit-for 12))
     (force-mode-line-update)))
@@ -61,11 +61,12 @@
                   'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
     (and (eobp) (setq arg -1))
+    (setq zop-to-char--last-input char)
     (when (minibufferp (current-buffer))
       (setq timer (run-with-idle-timer
                    0.1 t
                    'zop-to-char-info-in-mode-line
-                   prompt char doc)))
+                   prompt doc)))
     (unwind-protect
          (while (let ((input (read-key (unless (minibufferp (current-buffer))
                                          (concat prompt char doc))))
@@ -86,21 +87,30 @@
                     ((left ?\C-b)  ; Prec occurence.
                      (setq arg -1) t)
                     ((?\d ?\C-d)   ; Erase input.
-                     (setq char "") (goto-char pos) t)
+                     (setq char "") (goto-char pos)
+                     (setq zop-to-char--last-input char)
+                     (delete-overlay ov)
+                     t)
                     (?\C-q nil)    ; Quit at point
                     ((?\C-g ?\e)   ; Quit at pos.
                      (goto-char pos) nil)
                     (t             ; Input string.
                      (when (characterp input)
-                       (setq char (string input))))))
-           (if (< arg 0)
-               (search-backward char nil t (- arg))
-               (forward-char 1)
-               (search-forward char nil t arg)
-               (forward-char -1))
-           (if (< (point) pos)
-               (move-overlay ov (1+ pos) (point))
-               (move-overlay ov pos (1+ (point)))))
+                       (setq char (string input))
+                       (setq zop-to-char--last-input char)))))
+           (condition-case _err
+               (progn
+                 (if (< arg 0)
+                     (search-backward char nil t (- arg))
+                     (forward-char 1)
+                     (search-forward char nil t arg)
+                     (forward-char -1))
+                 (if (<= (point) pos)
+                     (move-overlay ov (1+ pos) (point))
+                     (move-overlay ov pos (1+ (point)))))
+             (scan-error nil)
+             (end-of-buffer nil)
+             (beginning-of-buffer nil)))
       (message nil)
       (when timer
         (cancel-timer timer) (setq timer nil))
