@@ -63,6 +63,8 @@
     (and (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
     (when (minibufferp (current-buffer))
+      (when (fboundp 'eldoc-run-in-minibuffer)
+        (cancel-function-timers 'eldoc-run-in-minibuffer))
       (setq timer (run-with-idle-timer
                    0.1 t
                    'zop-to-char-info-in-mode-line
