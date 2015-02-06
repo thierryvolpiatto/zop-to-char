@@ -34,9 +34,12 @@
 
 (require 'cl-lib)
 
+(declare-function eldoc-run-in-minibuffer "ext:eldoc-eval.el")
+
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
 (defvar zop-to-char--last-input nil)
+
 (defun zop-to-char-info-in-mode-line (prompt doc)
   "Display string STR in mode-line."
   (with-current-buffer
@@ -63,8 +66,9 @@
     (and (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
     (when (minibufferp (current-buffer))
-      (when (fboundp 'eldoc-run-in-minibuffer)
-        (cancel-function-timers 'eldoc-run-in-minibuffer))
+      (when (and (boundp 'eldoc-in-minibuffer-mode)
+                 eldoc-in-minibuffer-mode)
+        (cancel-function-timers #'eldoc-run-in-minibuffer))
       (setq timer (run-with-idle-timer
                    0.1 t
                    'zop-to-char-info-in-mode-line
@@ -116,6 +120,12 @@
       (message nil)
       (when timer
         (cancel-timer timer) (setq timer nil))
+      (when (and (minibufferp (current-buffer))
+                 (boundp 'eldoc-in-minibuffer-mode)
+                 eldoc-in-minibuffer-mode)
+        (run-with-idle-timer
+         eldoc-idle-delay
+         'repeat #'eldoc-run-in-minibuffer))
       (force-mode-line-update)
       (delete-overlay ov))))
 
