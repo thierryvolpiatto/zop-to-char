@@ -83,7 +83,7 @@
                      (kill-region
                       beg (if zop-to-char--delete-up-to-char
                               (1- end) end)) nil)
-                    (?\C-c         ; Copy region.
+                    ((?\C-c ?\M-w) ; Copy region.
                      (copy-region-as-kill
                       beg (if zop-to-char--delete-up-to-char
                               (1- end) end))
