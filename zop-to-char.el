@@ -41,7 +41,7 @@
 (defvar zop-to-char--last-input nil)
 
 (defun zop-to-char-info-in-mode-line (prompt doc)
-  "Display string STR in mode-line."
+  "Display PROMPT and DOC in mode-line."
   (with-current-buffer
       (window-buffer (with-selected-window (minibuffer-window)
                        (minibuffer-selected-window)))
