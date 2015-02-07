@@ -60,7 +60,7 @@
          timer
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
          (doc    (propertize
-                  "   [RET/C-k:kill, C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
+                  "   [RET/C-k:kill, M-w/C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
                   'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
     (and (eobp) (setq arg -1))
