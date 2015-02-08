@@ -58,6 +58,7 @@
          (ov     (make-overlay pos (1+ pos)))
          (char   "")
          timer
+         mini-p
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
          (doc    (propertize
                   "   [RET/C-k:kill, M-w/C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
@@ -65,7 +66,7 @@
     (overlay-put ov 'face 'region)
     (and (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
-    (when (minibufferp (current-buffer))
+    (when (setq mini-p (minibufferp (current-buffer)))
       (when (and (boundp 'eldoc-in-minibuffer-mode)
                  eldoc-in-minibuffer-mode)
         (cancel-function-timers #'eldoc-run-in-minibuffer))
@@ -107,7 +108,8 @@
            (condition-case _err
                (progn
                  (if (< arg 0)
-                     (search-backward char nil t (- arg))
+                     (search-backward
+                      char (and mini-p (field-beginning)) t (- arg))
                      (forward-char 1)
                      (search-forward char nil t arg)
                      (forward-char -1))
@@ -120,7 +122,7 @@
       (message nil)
       (when timer
         (cancel-timer timer) (setq timer nil))
-      (when (and (minibufferp (current-buffer))
+      (when (and mini-p
                  (boundp 'eldoc-in-minibuffer-mode)
                  eldoc-in-minibuffer-mode)
         (run-with-idle-timer
