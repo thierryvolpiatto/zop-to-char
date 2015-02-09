@@ -36,6 +36,22 @@
 
 (declare-function eldoc-run-in-minibuffer "ext:eldoc-eval.el")
 
+(defgroup zop-to-char nil
+  "An enhanced `zap-to-char'."
+  :group 'convenience)
+
+(defcustom zop-to-char-case-fold-search 'smart
+    "Add 'smart' option to `case-fold-search'.
+When smart is enabled, ignore case in the search
+if input character is not uppercase.
+Otherwise, with a nil or t value, the behavior is same as
+`case-fold-search'.
+Default value is smart, other possible values are nil and t."
+  :group 'zop-to-char
+  :type '(choice (const :tag "Ignore case" t)
+          (const :tag "Respect case" nil)
+          (other :tag "Smart" 'smart)))
+
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
 (defvar zop-to-char--last-input nil)
@@ -49,6 +65,12 @@
       (force-mode-line-update)
       (sit-for 12))
     (force-mode-line-update)))
+
+(defun zop-to-char--set-case-fold-search (str)
+  (cl-case zop-to-char-case-fold-search
+    (smart (let ((case-fold-search nil))
+             (if (string-match "[[:upper:]]" str) nil t)))
+    (t zop-to-char-case-fold-search)))
 
 ;;;###autoload
 (defun zop-to-char (arg)
@@ -80,33 +102,33 @@
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
                   (cl-case input
-                    ((?\r ?\C-k)   ; Kill region.
+                    ((?\r ?\C-k)        ; Kill region.
                      (kill-region
                       beg (if zop-to-char--delete-up-to-char
                               (1- end) end)) nil)
-                    ((?\C-c ?\M-w) ; Copy region.
+                    ((?\C-c ?\M-w)      ; Copy region.
                      (copy-region-as-kill
                       beg (if zop-to-char--delete-up-to-char
                               (1- end) end))
                      (goto-char pos) nil)
-                    ((right ?\C-f) ; Next occurence.
+                    ((right ?\C-f)      ; Next occurence.
                      (setq arg 1) t)
-                    ((left ?\C-b)  ; Prec occurence.
+                    ((left ?\C-b)       ; Prec occurence.
                      (setq arg -1) t)
-                    ((?\d ?\C-d)   ; Erase input.
+                    ((?\d ?\C-d)        ; Erase input.
                      (setq char "") (goto-char pos)
                      (setq zop-to-char--last-input char)
                      (delete-overlay ov)
                      t)
-                    (?\C-q nil)    ; Quit at point
-                    ((?\C-g ?\e)   ; Quit at pos.
+                    (?\C-q nil)         ; Quit at point
+                    ((?\C-g ?\e)        ; Quit at pos.
                      (goto-char pos) nil)
-                    (t             ; Input string.
+                    (t                  ; Input string.
                      (when (characterp input)
                        (setq char (string input))
                        (setq zop-to-char--last-input char)))))
            (condition-case _err
-               (progn
+               (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
                  (if (< arg 0)
                      (search-backward
                       char (and mini-p (field-beginning)) t (- arg))
