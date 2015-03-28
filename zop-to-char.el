@@ -40,6 +40,11 @@
   "An enhanced `zap-to-char'."
   :group 'convenience)
 
+(defconst zop-to-char-help-format-string
+  "   [%s:kill, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
+    "Help format text to display near the prompt.
+This text is displayed in mode-line if minibuffer is in use.")
+
 (defcustom zop-to-char-case-fold-search 'smart
     "Add 'smart' option to `case-fold-search'.
 When smart is enabled, ignore case in the search
@@ -87,10 +92,10 @@ Default value is smart, other possible values are nil and t."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
 
-(defconst zop-to-char-help-format-string
-  "   [%s:kill, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
-    "Help format text to display near the prompt.
-This text is displayed in mode-line if minibuffer is in use.")
+(defcustom zop-to-char-mode-line-idle-delay 120
+  "Display help string in mode-line that many time."
+  :group 'zop-to-char
+  :type 'integer)
 
 (defun zop-to-char--mapconcat-help-keys (seq)
   (cl-loop for k in seq
@@ -126,7 +131,7 @@ This text is displayed in mode-line if minibuffer is in use.")
                        (minibuffer-selected-window)))
     (let ((mode-line-format (concat " " (concat prompt zop-to-char--last-input doc))))
       (force-mode-line-update)
-      (sit-for 12))
+      (sit-for zop-to-char-mode-line-idle-delay))
     (force-mode-line-update)))
 
 (defun zop-to-char--set-case-fold-search (str)
