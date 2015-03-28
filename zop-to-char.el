@@ -52,7 +52,7 @@ Default value is smart, other possible values are nil and t."
           (const :tag "Respect case" nil)
           (other :tag "Smart" 'smart)))
 
-(defcustom zop-to-char-kill-keys '(?\r ?\C-K)
+(defcustom zop-to-char-kill-keys '(?\r ?\C-k)
   "Keys to kill the region text."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
@@ -87,11 +87,33 @@ Default value is smart, other possible values are nil and t."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
 
-(defcustom zop-to-char-help-string
-  "   [RET/C-k:kill, M-w/C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
-  "Help text to display near the prompt."
-  :group 'zop-to-char
-  :type 'string)
+(defconst zop-to-char-help-format-string
+  "   [%s:kill, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
+    "Help format text to display near the prompt.
+This text is displayed in mode-line if minibuffer is in use.")
+
+(defun zop-to-char--mapconcat-help-keys (seq)
+  (cl-loop for k in seq
+           when k concat (single-key-description k t) into str
+           and concat "/" into str
+           finally return (substring str 0 (1- (length str)))))
+
+(defun zop-to-char-help-string ()
+  (format zop-to-char-help-format-string
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-kill-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-copy-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-next-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-prec-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-quit-at-pos-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-quit-at-point-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-erase-keys)))
 
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
@@ -123,7 +145,7 @@ Default value is smart, other possible values are nil and t."
          timer
          mini-p
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
-         (doc    (propertize zop-to-char-help-string 'face 'minibuffer-prompt)))
+         (doc    (propertize (zop-to-char-help-string) 'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
     (and (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
