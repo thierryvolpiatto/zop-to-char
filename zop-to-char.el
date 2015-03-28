@@ -52,6 +52,47 @@ Default value is smart, other possible values are nil and t."
           (const :tag "Respect case" nil)
           (other :tag "Smart" 'smart)))
 
+(defcustom zop-to-char-kill-keys '(?\r ?\C-K)
+  "Keys to kill the region text."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-copy-keys '(?\C-c ?\M-w)
+  "Keys to copy the region text to the kill ring."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-next-keys '(right ?\C-f)
+  "Keys to move point to the next match."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-prec-keys '(left ?\C-b)
+  "Keys to move point to the preceding match."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-erase-keys '(?\d ?\C-d)
+  "Keys to delete the current input."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-quit-at-point-keys '(?\C-q nil)
+  "Keys to quit and leave point at its current location."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-quit-at-pos-keys '(?\C-g ?\e)
+  "Keys to quit and leave point at its original location."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-help-string
+  "   [RET/C-k:kill, M-w/C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
+  "Help text to display near the prompt."
+  :group 'zop-to-char
+  :type 'string)
+
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
 (defvar zop-to-char--last-input nil)
@@ -82,9 +123,7 @@ Default value is smart, other possible values are nil and t."
          timer
          mini-p
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
-         (doc    (propertize
-                  "   [RET/C-k:kill, M-w/C-c:copy, C-f/right:next, C-b/left:prec, C-g:abort, C-q:quit, DEL:erase]"
-                  'face 'minibuffer-prompt)))
+         (doc    (propertize zop-to-char-help-string 'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
     (and (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
@@ -97,50 +136,52 @@ Default value is smart, other possible values are nil and t."
                    'zop-to-char-info-in-mode-line
                    prompt doc)))
     (unwind-protect
-         (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                         (concat prompt char doc))))
-                      (beg   (overlay-start ov))
-                      (end   (overlay-end ov)))
-                  (cl-case input
-                    ((?\r ?\C-k)        ; Kill region.
-                     (kill-region
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end)) nil)
-                    ((?\C-c ?\M-w)      ; Copy region.
-                     (copy-region-as-kill
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end))
-                     (goto-char pos) nil)
-                    ((right ?\C-f)      ; Next occurence.
-                     (setq arg 1) t)
-                    ((left ?\C-b)       ; Prec occurence.
-                     (setq arg -1) t)
-                    ((?\d ?\C-d)        ; Erase input.
-                     (setq char "") (goto-char pos)
-                     (setq zop-to-char--last-input char)
-                     (delete-overlay ov)
-                     t)
-                    (?\C-q nil)         ; Quit at point
-                    ((?\C-g ?\e)        ; Quit at pos.
-                     (goto-char pos) nil)
-                    (t                  ; Input string.
-                     (when (characterp input)
-                       (setq char (string input))
-                       (setq zop-to-char--last-input char)))))
-           (condition-case _err
-               (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
-                 (if (< arg 0)
-                     (search-backward
-                      char (and mini-p (field-beginning)) t (- arg))
-                     (forward-char 1)
-                     (search-forward char nil t arg)
-                     (forward-char -1))
-                 (if (<= (point) pos)
-                     (move-overlay ov (1+ pos) (point))
-                     (move-overlay ov pos (1+ (point)))))
-             (scan-error nil)
-             (end-of-buffer nil)
-             (beginning-of-buffer nil)))
+        (while (let ((input (read-key (unless (minibufferp (current-buffer))
+                                        (concat prompt char doc))))
+                     (beg   (overlay-start ov))
+                     (end   (overlay-end ov)))
+                 (cond
+                  ((memq input zop-to-char-kill-keys)
+                   (kill-region
+                    beg (if zop-to-char--delete-up-to-char
+                            (1- end) end)) nil)
+                  ((memq input zop-to-char-copy-keys)
+                   (copy-region-as-kill
+                    beg (if zop-to-char--delete-up-to-char
+                            (1- end) end))
+                   (goto-char pos) nil)
+                  ((memq input zop-to-char-next-keys)
+                   (setq arg 1) t)
+                  ((memq input zop-to-char-prec-keys)
+                   (setq arg -1) t)
+                  ((memq input zop-to-char-erase-keys)
+                   (setq char "") (goto-char pos)
+                   (setq zop-to-char--last-input char)
+                   (delete-overlay ov)
+                   t)
+                  ((memq input zop-to-char-quit-at-point-keys)
+                   nil)
+                  ((memq input zop-to-char-quit-at-pos-keys)
+                   (goto-char pos) nil)
+                  (t
+                   ;; Input string
+                   (when (characterp input)
+                     (setq char (string input))
+                     (setq zop-to-char--last-input char)))))
+          (condition-case _err
+              (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
+                (if (< arg 0)
+                    (search-backward
+                     char (and mini-p (field-beginning)) t (- arg))
+                  (forward-char 1)
+                  (search-forward char nil t arg)
+                  (forward-char -1))
+                (if (<= (point) pos)
+                    (move-overlay ov (1+ pos) (point))
+                  (move-overlay ov pos (1+ (point)))))
+            (scan-error nil)
+            (end-of-buffer nil)
+            (beginning-of-buffer nil)))
       (message nil)
       (when timer
         (cancel-timer timer) (setq timer nil))
