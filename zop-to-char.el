@@ -4,27 +4,28 @@
 ;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
 ;; X-URL: https://github.com/thierryvolpiatto/zop-to-char
 ;; Package-Requires: ((cl-lib "0.5"))
+;; Version: 1.0
 
 ;; Compatibility: GNU Emacs 23.1+
 
-;; This file is not part of GNU Emacs. 
+;; This file is not part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License as
 ;; published by the Free Software Foundation; either version 3, or
 ;; (at your option) any later version.
-;; 
+;;
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 ;; General Public License for more details.
-;; 
+;;
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
 ;; Floor, Boston, MA 02110-1301, USA.
 
-;; Install:
+;;; Commentary:
 
 ;; (require 'zop-to-char)
 ;; To replace `zap-to-char':
@@ -129,7 +130,8 @@ Default value is smart, other possible values are nil and t."
   (with-current-buffer
       (window-buffer (with-selected-window (minibuffer-window)
                        (minibuffer-selected-window)))
-    (let ((mode-line-format (concat " " (concat prompt zop-to-char--last-input doc))))
+    (let ((mode-line-format
+           (concat " " (concat prompt zop-to-char--last-input doc))))
       (force-mode-line-update)
       (sit-for zop-to-char-mode-line-idle-delay))
     (force-mode-line-update)))
@@ -142,10 +144,14 @@ Default value is smart, other possible values are nil and t."
 
 ;;;###autoload
 (defun zop-to-char (arg)
-  "An enhanced version of `zap-to-char'."
+  "An enhanced version of `zap-to-char'.
+
+Argument ARG, when given is index of occurence to jump to.  For
+example, if ARG is 2, `zop-to-char' will jump to second occurence
+of given character.  If ARG is negative, jump in backward direction."
   (interactive "p")
   (let* ((pos    (point))
-         (ov     (make-overlay pos (1+ pos)))
+         (ov     (make-overlay pos pos))
          (char   "")
          timer
          mini-p
@@ -163,55 +169,67 @@ Default value is smart, other possible values are nil and t."
                    'zop-to-char-info-in-mode-line
                    prompt doc)))
     (unwind-protect
-         (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                         (concat prompt char doc))))
-                      (beg   (overlay-start ov))
-                      (end   (overlay-end ov)))
-                  (cond
-                    ((memq input zop-to-char-kill-keys)
-                     (kill-region
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end)) nil)
-                    ((memq input zop-to-char-copy-keys)
-                     (copy-region-as-kill
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end))
-                     (goto-char pos) nil)
-                    ((memq input zop-to-char-next-keys)
-                     (setq arg 1) t)
-                    ((memq input zop-to-char-prec-keys)
-                     (setq arg -1) t)
-                    ((memq input zop-to-char-erase-keys)
-                     (setq char "") (goto-char pos)
-                     (setq zop-to-char--last-input char)
-                     (delete-overlay ov)
-                     t)
-                    ((memq input zop-to-char-quit-at-point-keys)
-                     nil)
-                    ((memq input zop-to-char-quit-at-pos-keys)
-                     (goto-char pos) nil)
-                    (t
-                     ;; Input string
-                     (when (characterp input)
-                       (setq char (string input))
-                       (setq zop-to-char--last-input char)))))
-           (condition-case _err
-               (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
-                 (if (< arg 0)
-                     (search-backward
-                      char (and mini-p (field-beginning)) t (- arg))
-                     (forward-char 1)
-                     (search-forward char nil t arg)
-                     (forward-char -1))
-                 (if (<= (point) pos)
-                     (move-overlay ov (1+ pos) (point))
-                     (move-overlay ov pos (1+ (point)))))
-             (scan-error nil)
-             (end-of-buffer nil)
-             (beginning-of-buffer nil)))
+        (while (let ((input (read-key (unless (minibufferp (current-buffer))
+                                        (concat prompt char doc))))
+                     (beg   (overlay-start ov))
+                     (end   (overlay-end ov)))
+                 (cond
+                  ((memq input zop-to-char-kill-keys)
+                   (kill-region beg end)
+                   nil)
+                  ((memq input zop-to-char-copy-keys)
+                   (copy-region-as-kill beg end)
+                   (goto-char pos)
+                   nil)
+                  ((memq input zop-to-char-next-keys)
+                   (setq arg 1)
+                   t)
+                  ((memq input zop-to-char-prec-keys)
+                   (setq arg -1)
+                   t)
+                  ((memq input zop-to-char-erase-keys)
+                   (setq char                    ""
+                         zop-to-char--last-input "")
+                   (goto-char pos)
+                   (delete-overlay ov)
+                   t)
+                  ((memq input zop-to-char-quit-at-point-keys)
+                   nil)
+                  ((memq input zop-to-char-quit-at-pos-keys)
+                   (goto-char pos)
+                   nil)
+                  (t
+                   ;; Input string
+                   (when (characterp input)
+                     (setq char (string input))
+                     (setq zop-to-char--last-input char)))))
+          (condition-case _err
+              (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
+                (if (< arg 0)
+                    (search-backward
+                     char (and mini-p (field-beginning)) t (- arg))
+                  (forward-char 1)
+                  (search-forward char nil t arg)
+                  (forward-char -1))
+                (let ((pnt (point)))
+                  (if (< pnt pos)
+                      (move-overlay ov
+                                    (if zop-to-char--delete-up-to-char
+                                        (1+ pnt)
+                                      pnt)
+                                    pos)
+                    (move-overlay ov
+                                  pos
+                                  (if zop-to-char--delete-up-to-char
+                                      pnt
+                                    (1+ pnt))))))
+            (scan-error nil)
+            (end-of-buffer nil)
+            (beginning-of-buffer nil)))
       (message nil)
       (when timer
-        (cancel-timer timer) (setq timer nil))
+        (cancel-timer timer)
+        (setq timer nil))
       (when (and mini-p
                  (boundp 'eldoc-in-minibuffer-mode)
                  eldoc-in-minibuffer-mode)
@@ -223,12 +241,16 @@ Default value is smart, other possible values are nil and t."
 
 ;;;###autoload
 (defun zop-up-to-char (arg)
-  "Same as `zop-to-char' but stop just before target.
-Same as `zap-up-to-char'."
+  "An enhanced version of `zap-up-to-char'.
+
+Argument ARG, when given is index of occurence to jump to.  For
+example, if ARG is 2, `zop-up-to-char' will jump to second
+occurence of given character.  If ARG is negative, jump in
+backward direction."
   (interactive "p")
   (let ((zop-to-char--delete-up-to-char t))
     (zop-to-char arg)))
 
 (provide 'zop-to-char)
 
-;;; zop-to-char.el ends here.
+;;; zop-to-char.el ends here
