@@ -208,8 +208,10 @@ of given character.  If ARG is negative, jump in backward direction."
            (condition-case _err
                (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
                  (if (< arg 0)
-                     (search-backward
-                      char (and mini-p (field-beginning)) t (- arg))
+                     (progn
+                       (forward-char -1)
+                       (search-backward
+                        char (and mini-p (field-beginning)) t (- arg)))
                      (forward-char 1)
                      (search-forward char nil t arg)
                      (forward-char -1))
