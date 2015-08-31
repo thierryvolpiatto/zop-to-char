@@ -44,7 +44,7 @@
   :group 'convenience)
 
 (defconst zop-to-char-help-format-string
-  "   [%s:kill, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
+  "   [%s:kill, %s:delete, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
     "Help format text to display near the prompt.
 This text is displayed in mode-line if minibuffer is in use.")
 
@@ -62,6 +62,11 @@ Default value is smart, other possible values are nil and t."
 
 (defcustom zop-to-char-kill-keys '(?\r ?\C-k)
   "Keys to kill the region text."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
+(defcustom zop-to-char-delete-keys '(?\l ?\C-l)
+  "Keys to delete the region text."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
 
@@ -110,6 +115,8 @@ Default value is smart, other possible values are nil and t."
   (format zop-to-char-help-format-string
           (zop-to-char--mapconcat-help-keys
            zop-to-char-kill-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-delete-keys)
           (zop-to-char--mapconcat-help-keys
            zop-to-char-copy-keys)
           (zop-to-char--mapconcat-help-keys
@@ -180,6 +187,9 @@ of given character.  If ARG is negative, jump in backward direction."
                   (cond
                     ((memq input zop-to-char-kill-keys)
                      (kill-region beg end)
+                     nil)
+                    ((memq input zop-to-char-delete-keys)
+                     (delete-region beg end)
                      nil)
                     ((memq input zop-to-char-copy-keys)
                      (copy-region-as-kill beg end)
