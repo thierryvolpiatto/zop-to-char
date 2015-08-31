@@ -160,7 +160,8 @@ of given character.  If ARG is negative, jump in backward direction."
          (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
          (doc    (propertize (zop-to-char-help-string) 'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
-    (and (eobp) (setq arg -1))
+    (when (eobp)
+      (setq arg -1))
     (setq zop-to-char--last-input char)
     (when (setq mini-p (minibufferp (current-buffer)))
       (when (and (boundp 'eldoc-in-minibuffer-mode)
@@ -171,8 +172,9 @@ of given character.  If ARG is negative, jump in backward direction."
                    'zop-to-char-info-in-mode-line
                    prompt doc)))
     (unwind-protect
-         (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                         (concat prompt char doc))))
+         (while (let ((input (read-char (unless (minibufferp (current-buffer))
+                                          (concat prompt char doc))
+                                        t))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
                   (cond
@@ -211,22 +213,17 @@ of given character.  If ARG is negative, jump in backward direction."
                      (progn
                        (forward-char -1)
                        (search-backward
-                        char (and mini-p (field-beginning)) t (- arg)))
+                        char (and mini-p (field-beginning)) t (- arg))
+                       (when zop-to-char--delete-up-to-char
+                         (forward-char 1)))
                      (forward-char 1)
                      (search-forward char nil t arg)
-                     (forward-char -1))
+                     (when zop-to-char--delete-up-to-char
+                       (forward-char -1)))
                  (let ((pnt (point)))
                    (if (< pnt pos)
-                       (move-overlay ov
-                                     (if zop-to-char--delete-up-to-char
-                                         (1+ pnt)
-                                         pnt)
-                                     pos)
-                       (move-overlay ov
-                                     pos
-                                     (if zop-to-char--delete-up-to-char
-                                         pnt
-                                         (1+ pnt))))))
+                       (move-overlay ov pnt pos)
+                       (move-overlay ov pos pnt))))
              (scan-error nil)
              (end-of-buffer nil)
              (beginning-of-buffer nil)))
