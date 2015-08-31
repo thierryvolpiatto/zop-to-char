@@ -36,7 +36,9 @@
 (require 'cl-lib)
 
 (declare-function eldoc-run-in-minibuffer "ext:eldoc-eval.el")
+(defvar eldoc-idle-delay)
 
+
 (defgroup zop-to-char nil
   "An enhanced `zap-to-char'."
   :group 'convenience)
@@ -97,7 +99,7 @@ Default value is smart, other possible values are nil and t."
   "Display help string in mode-line that many time."
   :group 'zop-to-char
   :type 'integer)
-
+
 (defun zop-to-char--mapconcat-help-keys (seq)
   (cl-loop for k in seq
            when k concat (single-key-description k t) into str
@@ -141,7 +143,7 @@ Default value is smart, other possible values are nil and t."
     (smart (let ((case-fold-search nil))
              (if (string-match "[[:upper:]]" str) nil t)))
     (t zop-to-char-case-fold-search)))
-
+
 ;;;###autoload
 (defun zop-to-char (arg)
   "An enhanced version of `zap-to-char'.
@@ -169,63 +171,63 @@ of given character.  If ARG is negative, jump in backward direction."
                    'zop-to-char-info-in-mode-line
                    prompt doc)))
     (unwind-protect
-        (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                        (concat prompt char doc))))
-                     (beg   (overlay-start ov))
-                     (end   (overlay-end ov)))
-                 (cond
-                  ((memq input zop-to-char-kill-keys)
-                   (kill-region beg end)
-                   nil)
-                  ((memq input zop-to-char-copy-keys)
-                   (copy-region-as-kill beg end)
-                   (goto-char pos)
-                   nil)
-                  ((memq input zop-to-char-next-keys)
-                   (setq arg 1)
-                   t)
-                  ((memq input zop-to-char-prec-keys)
-                   (setq arg -1)
-                   t)
-                  ((memq input zop-to-char-erase-keys)
-                   (setq char                    ""
-                         zop-to-char--last-input "")
-                   (goto-char pos)
-                   (delete-overlay ov)
-                   t)
-                  ((memq input zop-to-char-quit-at-point-keys)
-                   nil)
-                  ((memq input zop-to-char-quit-at-pos-keys)
-                   (goto-char pos)
-                   nil)
-                  (t
-                   ;; Input string
-                   (when (characterp input)
-                     (setq char (string input))
-                     (setq zop-to-char--last-input char)))))
-          (condition-case _err
-              (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
-                (if (< arg 0)
-                    (search-backward
-                     char (and mini-p (field-beginning)) t (- arg))
-                  (forward-char 1)
-                  (search-forward char nil t arg)
-                  (forward-char -1))
-                (let ((pnt (point)))
-                  (if (< pnt pos)
-                      (move-overlay ov
-                                    (if zop-to-char--delete-up-to-char
-                                        (1+ pnt)
-                                      pnt)
-                                    pos)
-                    (move-overlay ov
-                                  pos
-                                  (if zop-to-char--delete-up-to-char
-                                      pnt
-                                    (1+ pnt))))))
-            (scan-error nil)
-            (end-of-buffer nil)
-            (beginning-of-buffer nil)))
+         (while (let ((input (read-key (unless (minibufferp (current-buffer))
+                                         (concat prompt char doc))))
+                      (beg   (overlay-start ov))
+                      (end   (overlay-end ov)))
+                  (cond
+                    ((memq input zop-to-char-kill-keys)
+                     (kill-region beg end)
+                     nil)
+                    ((memq input zop-to-char-copy-keys)
+                     (copy-region-as-kill beg end)
+                     (goto-char pos)
+                     nil)
+                    ((memq input zop-to-char-next-keys)
+                     (setq arg 1)
+                     t)
+                    ((memq input zop-to-char-prec-keys)
+                     (setq arg -1)
+                     t)
+                    ((memq input zop-to-char-erase-keys)
+                     (setq char                    ""
+                           zop-to-char--last-input "")
+                     (goto-char pos)
+                     (delete-overlay ov)
+                     t)
+                    ((memq input zop-to-char-quit-at-point-keys)
+                     nil)
+                    ((memq input zop-to-char-quit-at-pos-keys)
+                     (goto-char pos)
+                     nil)
+                    (t
+                     ;; Input string
+                     (when (characterp input)
+                       (setq char (string input))
+                       (setq zop-to-char--last-input char)))))
+           (condition-case _err
+               (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
+                 (if (< arg 0)
+                     (search-backward
+                      char (and mini-p (field-beginning)) t (- arg))
+                     (forward-char 1)
+                     (search-forward char nil t arg)
+                     (forward-char -1))
+                 (let ((pnt (point)))
+                   (if (< pnt pos)
+                       (move-overlay ov
+                                     (if zop-to-char--delete-up-to-char
+                                         (1+ pnt)
+                                         pnt)
+                                     pos)
+                       (move-overlay ov
+                                     pos
+                                     (if zop-to-char--delete-up-to-char
+                                         pnt
+                                         (1+ pnt))))))
+             (scan-error nil)
+             (end-of-buffer nil)
+             (beginning-of-buffer nil)))
       (message nil)
       (when timer
         (cancel-timer timer)
