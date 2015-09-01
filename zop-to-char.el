@@ -65,7 +65,7 @@ Default value is smart, other possible values are nil and t."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
 
-(defcustom zop-to-char-delete-keys '(?\l ?\C-l)
+(defcustom zop-to-char-delete-keys '(?\C-l nil)
   "Keys to delete the region text."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
