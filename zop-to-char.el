@@ -180,8 +180,7 @@ of given character.  If ARG is negative, jump in backward direction."
                    prompt doc)))
     (unwind-protect
          (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                         (concat prompt char doc))
-                                        t))
+                                         (concat prompt char doc))))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
                   (cond
