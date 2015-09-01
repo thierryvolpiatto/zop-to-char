@@ -179,8 +179,8 @@ of given character.  If ARG is negative, jump in backward direction."
                    'zop-to-char-info-in-mode-line
                    prompt doc)))
     (unwind-protect
-         (while (let ((input (read-char (unless (minibufferp (current-buffer))
-                                          (concat prompt char doc))
+         (while (let ((input (read-key (unless (minibufferp (current-buffer))
+                                         (concat prompt char doc))
                                         t))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
