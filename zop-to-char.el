@@ -44,7 +44,7 @@
   :group 'convenience)
 
 (defconst zop-to-char-help-format-string
-  "   [%s:kill, %s:delete, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase]"
+  "   [%s:kill, %s:delete, %s:copy, %s:next, %s:prec, %s:abort, %s:quit, %s:erase %s:mark]"
     "Help format text to display near the prompt.
 This text is displayed in mode-line if minibuffer is in use.")
 
@@ -100,6 +100,11 @@ Default value is smart, other possible values are nil and t."
   :group 'zop-to-char
   :type '(repeat (choice character symbol integer)))
 
+(defcustom zop-to-char-mark-region-keys '(?\C- )
+  "Keys to quit and mark region."
+  :group 'zop-to-char
+  :type '(repeat (choice character symbol integer)))
+
 (defcustom zop-to-char-mode-line-idle-delay 120
   "Display help string in mode-line that many time."
   :group 'zop-to-char
@@ -128,7 +133,9 @@ Default value is smart, other possible values are nil and t."
           (zop-to-char--mapconcat-help-keys
            zop-to-char-quit-at-point-keys)
           (zop-to-char--mapconcat-help-keys
-           zop-to-char-erase-keys)))
+           zop-to-char-erase-keys)
+          (zop-to-char--mapconcat-help-keys
+           zop-to-char-mark-region-keys)))
 
 ;; Internal
 (defvar zop-to-char--delete-up-to-char nil)
@@ -210,6 +217,9 @@ of given character.  If ARG is negative, jump in backward direction."
                      nil)
                     ((memq input zop-to-char-quit-at-pos-keys)
                      (goto-char pos)
+                     nil)
+                    ((memq input zop-to-char-mark-region-keys)
+                     (push-mark pos nil t)
                      nil)
                     (t
                      ;; Input string
