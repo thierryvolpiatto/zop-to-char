@@ -233,16 +233,22 @@ of given character.  If ARG is negative, jump in backward direction."
                        (forward-char -1)
                        (search-backward
                         char (and mini-p (field-beginning)) t (- arg))
-                       (when zop-to-char--delete-up-to-char
-                         (forward-char 1)))
+                       (forward-char 1))
                      (forward-char 1)
                      (search-forward char nil t arg)
-                     (when zop-to-char--delete-up-to-char
-                       (forward-char -1)))
+                     (forward-char -1))
                  (let ((pnt (point)))
                    (if (< pnt pos)
-                       (move-overlay ov pnt pos)
-                       (move-overlay ov pos pnt))))
+                       (move-overlay ov
+                                     (if zop-to-char--delete-up-to-char
+                                         (1+ pnt)
+                                         pnt)
+                                     pos)
+                       (move-overlay ov
+                                     pos
+                                     (if zop-to-char--delete-up-to-char
+                                         pnt
+                                         (1+ pnt))))))
              (scan-error nil)
              (end-of-buffer nil)
              (beginning-of-buffer nil)))
