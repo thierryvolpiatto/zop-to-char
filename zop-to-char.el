@@ -171,11 +171,13 @@ of given character.  If ARG is negative, jump in backward direction."
          (char   "")
          timer
          mini-p
-         (prompt (propertize "Zap to char: " 'face 'minibuffer-prompt))
+         (bstr (if (> arg 0) "-> " "<- "))
+         (prompt (propertize (if zop-to-char--delete-up-to-char
+                                 "Zap up to char: " "Zap to char: ")
+                             'face 'minibuffer-prompt))
          (doc    (propertize (zop-to-char-help-string) 'face 'minibuffer-prompt)))
     (overlay-put ov 'face 'region)
-    (when (eobp)
-      (setq arg -1))
+    (when (eobp) (setq arg -1))
     (setq zop-to-char--last-input char)
     (when (setq mini-p (minibufferp (current-buffer)))
       (when (and (boundp 'eldoc-in-minibuffer-mode)
@@ -187,7 +189,7 @@ of given character.  If ARG is negative, jump in backward direction."
                    prompt doc)))
     (unwind-protect
          (while (let ((input (read-key (unless (minibufferp (current-buffer))
-                                         (concat prompt char doc))))
+                                         (concat prompt bstr char doc))))
                       (beg   (overlay-start ov))
                       (end   (overlay-end ov)))
                   (cond
@@ -202,10 +204,10 @@ of given character.  If ARG is negative, jump in backward direction."
                      (goto-char pos)
                      nil)
                     ((memq input zop-to-char-next-keys)
-                     (setq arg 1)
+                     (setq arg 1) (setq bstr "-> ")
                      t)
                     ((memq input zop-to-char-prec-keys)
-                     (setq arg -1)
+                     (setq arg -1) (setq bstr "<- ")
                      t)
                     ((memq input zop-to-char-erase-keys)
                      (setq char                    ""
@@ -230,15 +232,13 @@ of given character.  If ARG is negative, jump in backward direction."
                (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
                  (if (< arg 0)
                      (progn
-                       (forward-char -1)
+                       (when zop-to-char--delete-up-to-char (forward-char -1))
                        (search-backward
                         char (and mini-p (field-beginning)) t (- arg))
-                       (when zop-to-char--delete-up-to-char
-                         (forward-char 1)))
-                     (forward-char 1)
+                       (when zop-to-char--delete-up-to-char (forward-char 1)))
+                     (when zop-to-char--delete-up-to-char (forward-char 1))
                      (search-forward char nil t arg)
-                     (when zop-to-char--delete-up-to-char
-                       (forward-char -1)))
+                     (when zop-to-char--delete-up-to-char (forward-char -1)))
                  (let ((pnt (point)))
                    (if (< pnt pos)
                        (move-overlay ov pnt pos)
