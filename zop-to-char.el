@@ -194,13 +194,20 @@ of given character.  If ARG is negative, jump in backward direction."
                       (end   (overlay-end ov)))
                   (cond
                     ((memq input zop-to-char-kill-keys)
-                     (kill-region
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end)) nil)
+                     (apply #'kill-region
+                            (if zop-to-char--delete-up-to-char
+                                (if (< arg 0)
+                                    (list (1+ beg) end)
+                                    (list beg (1- end)))
+                                (list beg end)))
+                     nil)
                     ((memq input zop-to-char-copy-keys)
-                     (copy-region-as-kill
-                      beg (if zop-to-char--delete-up-to-char
-                              (1- end) end))
+                     (apply #'copy-region-as-kill
+                            (if zop-to-char--delete-up-to-char
+                                (if (< arg 0)
+                                    (list (1+ beg) end)
+                                    (list beg (1- end)))
+                                (list beg end)))
                      (goto-char pos) nil)
                     ((memq input zop-to-char-next-keys)
                      (setq arg 1) (setq bstr "-> ")
