@@ -167,7 +167,7 @@ example, if ARG is 2, `zop-to-char' will jump to second occurence
 of given character.  If ARG is negative, jump in backward direction."
   (interactive "p")
   (let* ((pos    (point))
-         (ov     (make-overlay pos pos))
+         (ov     (make-overlay pos (1+ pos)))
          (char   "")
          timer
          mini-p
@@ -194,15 +194,14 @@ of given character.  If ARG is negative, jump in backward direction."
                       (end   (overlay-end ov)))
                   (cond
                     ((memq input zop-to-char-kill-keys)
-                     (kill-region beg end)
-                     nil)
-                    ((memq input zop-to-char-delete-keys)
-                     (delete-region beg end)
-                     nil)
+                     (kill-region
+                      beg (if zop-to-char--delete-up-to-char
+                              (1- end) end)) nil)
                     ((memq input zop-to-char-copy-keys)
-                     (copy-region-as-kill beg end)
-                     (goto-char pos)
-                     nil)
+                     (copy-region-as-kill
+                      beg (if zop-to-char--delete-up-to-char
+                              (1- end) end))
+                     (goto-char pos) nil)
                     ((memq input zop-to-char-next-keys)
                      (setq arg 1) (setq bstr "-> ")
                      t)
@@ -231,18 +230,14 @@ of given character.  If ARG is negative, jump in backward direction."
            (condition-case _err
                (let ((case-fold-search (zop-to-char--set-case-fold-search char)))
                  (if (< arg 0)
-                     (progn
-                       (when zop-to-char--delete-up-to-char (forward-char -1))
-                       (search-backward
-                        char (and mini-p (field-beginning)) t (- arg))
-                       (when zop-to-char--delete-up-to-char (forward-char 1)))
-                     (when zop-to-char--delete-up-to-char (forward-char 1))
+                     (search-backward
+                      char (and mini-p (field-beginning)) t (- arg))
+                     (forward-char 1)
                      (search-forward char nil t arg)
-                     (when zop-to-char--delete-up-to-char (forward-char -1)))
-                 (let ((pnt (point)))
-                   (if (< pnt pos)
-                       (move-overlay ov pnt pos)
-                       (move-overlay ov pos pnt))))
+                     (forward-char -1))
+                 (if (<= (point) pos)
+                     (move-overlay ov (1+ pos) (point))
+                     (move-overlay ov pos (1+ (point)))))
              (scan-error nil)
              (end-of-buffer nil)
              (beginning-of-buffer nil)))
