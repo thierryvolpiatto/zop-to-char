@@ -170,8 +170,8 @@ Default value is smart, other possible values are nil and t."
 (defun zop-to-char (arg)
   "An enhanced version of `zap-to-char'.
 
-Argument ARG, when given is index of occurence to jump to.  For
-example, if ARG is 2, `zop-to-char' will jump to second occurence
+Argument ARG, when given is index of occurrence to jump to.  For
+example, if ARG is 2, `zop-to-char' will jump to second occurrence
 of given character.  If ARG is negative, jump in backward direction."
   (interactive "p")
   (let* ((pos    (point))
@@ -269,9 +269,9 @@ of given character.  If ARG is negative, jump in backward direction."
 (defun zop-up-to-char (arg)
   "An enhanced version of `zap-up-to-char'.
 
-Argument ARG, when given is index of occurence to jump to.  For
+Argument ARG, when given is index of occurrence to jump to.  For
 example, if ARG is 2, `zop-up-to-char' will jump to second
-occurence of given character.  If ARG is negative, jump in
+occurrence of given character.  If ARG is negative, jump in
 backward direction."
   (interactive "p")
   (let ((zop-to-char--delete-up-to-char t))
