@@ -231,6 +231,8 @@ of given character.  If ARG is negative, jump in backward direction."
                      (goto-char pos)
                      nil)
                     ((memq input zop-to-char-mark-region-keys)
+                     (unless zop-to-char--delete-up-to-char
+                       (forward-char arg))
                      (push-mark pos nil t)
                      nil)
                     (t
