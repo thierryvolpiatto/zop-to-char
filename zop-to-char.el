@@ -157,6 +157,14 @@ Default value is smart, other possible values are nil and t."
     (smart (let ((case-fold-search nil))
              (if (string-match "[[:upper:]]" str) nil t)))
     (t zop-to-char-case-fold-search)))
+
+(defun zop-to-char--beg-end (arg beg end)
+  (if zop-to-char--delete-up-to-char
+      (if (< arg 0)
+          (list (1+ beg) end)
+          (list beg (1- end)))
+      (list beg end)))
+
 
 ;;;###autoload
 (defun zop-to-char (arg)
@@ -195,19 +203,11 @@ of given character.  If ARG is negative, jump in backward direction."
                   (cond
                     ((memq input zop-to-char-kill-keys)
                      (apply #'kill-region
-                            (if zop-to-char--delete-up-to-char
-                                (if (< arg 0)
-                                    (list (1+ beg) end)
-                                    (list beg (1- end)))
-                                (list beg end)))
+                            (zop-to-char--beg-end arg beg end))
                      nil)
                     ((memq input zop-to-char-copy-keys)
                      (apply #'copy-region-as-kill
-                            (if zop-to-char--delete-up-to-char
-                                (if (< arg 0)
-                                    (list (1+ beg) end)
-                                    (list beg (1- end)))
-                                (list beg end)))
+                            (zop-to-char--beg-end arg beg end))
                      (goto-char pos) nil)
                     ((memq input zop-to-char-next-keys)
                      (setq arg 1) (setq bstr "-> ")
@@ -221,6 +221,10 @@ of given character.  If ARG is negative, jump in backward direction."
                      (goto-char pos)
                      (delete-overlay ov)
                      t)
+                    ((memq input zop-to-char-delete-keys)
+                     (apply #'delete-region
+                            (zop-to-char--beg-end arg beg end))
+                     nil)
                     ((memq input zop-to-char-quit-at-point-keys)
                      nil)
                     ((memq input zop-to-char-quit-at-pos-keys)
