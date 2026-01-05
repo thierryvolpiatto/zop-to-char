@@ -1,7 +1,7 @@
 ;;; zop-to-char.el --- A replacement of zap-to-char. -*- lexical-binding: t -*-
 
 ;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;; Copyright (C) 2010~2014 Thierry Volpiatto, all rights reserved.
+;; Copyright (C) 2010~2025 Thierry Volpiatto, all rights reserved.
 ;; X-URL: https://github.com/thierryvolpiatto/zop-to-char
 ;; Package-Requires: ((cl-lib "0.5"))
 ;; Version: 1.0
